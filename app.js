@@ -3,7 +3,6 @@ const app=express();
 const morgan=require("morgan");
 const port=3500
 const cors = require('cors')
-require('dotenv').config();
 
 app.use(express.urlencoded({extended:false}))
 app.use(express.json());
