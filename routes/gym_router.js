@@ -4,7 +4,7 @@ const loginControl = require('../controllers/login_contriller');
 
 router.post('/login', loginControl.login);
 router.post('/logout', loginControl.logout);
-router.post('/registro', loginControl.register);
+router.post('/registro', loginControl.registroAltas);
 
 
 module.exports = router;

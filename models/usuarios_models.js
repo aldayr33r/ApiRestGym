@@ -1,27 +1,72 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/conexion');
-const bcrypt = require('bcrypt');
+const Sequelize = require('sequelize');
+const conexion = require('../config/conexion.js');
 
-const usuario = sequelize.define('usuario', {
+const UsuarioModel = conexion.define("usuarios", {
     id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        allowNull: false,
+        autoIncrement: true
+    },
+    nombre: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    apellidos: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    email: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
+    },
+    telefono: {
+        type: Sequelize.STRING, 
+        allowNull: false
+    },
+    sexo: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    peso: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    estatura: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    estado_suscripcion: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    dias_suscripcion: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    tipo_rutina: {
+        type: Sequelize.STRING,
+        allowNull: false
     },
     user: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
         unique: true
     },
     pass: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
+    },
+    tipo_usuario: {
+        type: Sequelize.STRING,
         allowNull: false
     },
-    rol: {
-        type: DataTypes.STRING,
-        defaultValue: 'user'
+    fecha_registro: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW 
     }
 });
 
-
-module.exports = usuario;
+module.exports = UsuarioModel;
