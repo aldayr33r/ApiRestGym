@@ -19,8 +19,8 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "mysql2": "^3.9.2",
     "sequelize": "^6.37.1",
-    "sweetalert2": "^11.10.7",
-    "mysql2": "^3.9.2"
+    "sweetalert2": "^11.10.7"
   }
 }
