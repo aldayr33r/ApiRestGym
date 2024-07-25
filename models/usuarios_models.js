@@ -1,72 +1,27 @@
-const Sequelize = require('sequelize');
-const conexion = require('../config/conexion.js');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
-const UsuarioModel = conexion.define("usuarios", {
-    id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        allowNull: false,
-        autoIncrement: true
-    },
-    nombre: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    apellidos: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
-    },
-    telefono: {
-        type: Sequelize.STRING, 
-        allowNull: false
-    },
-    sexo: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    peso: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    estatura: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    estado_suscripcion: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    dias_suscripcion: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    tipo_rutina: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    user: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
-    },
-    pass: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
-    },
-    tipo_usuario: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    fecha_registro: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW 
-    }
+const usuarioSchema = new mongoose.Schema({
+  nombre: { type: String, required: true },
+  apellidos: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  telefono: { type: String, required: true },
+  sexo: { type: String, required: true },
+  peso: { type: String, required: true },
+  estatura: { type: String, required: true },
+  estado_suscripcion: { type: String, required: true },
+  dias_suscripcion: { type: String, required: true },
+  tipo_rutina: { type: String, required: true },
+  user: { type: String, required: true, unique: true },
+  pass: { type: String, required: true },
+  tipo_usuario: { type: String, required: true },
+  fecha_registro: { type: Date, default: Date.now },
 });
+
+usuarioSchema.methods.validatePassword = async function(password) {
+  return await bcrypt.compare(password, this.pass);
+};
+
+const UsuarioModel = mongoose.model('Usuario', usuarioSchema);
 
 module.exports = UsuarioModel;

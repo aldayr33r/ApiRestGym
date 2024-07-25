@@ -1,8 +1,56 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const usuarioModel = require('../models/usuarios_models');
+const UsuarioModel = require('../models/usuarios_models');
 const saltRounds = 10;
-const { Op } = require('sequelize');
+
+const login = async (req, res, next) => {
+    const { user, pass } = req.body;
+
+    if (!user || !pass) {
+        return res.status(400).json({
+            message: 'Login',
+            title: "Error",
+            alertMessage: "Usuario o contraseña no proporcionados",
+            icon: "error",
+            name: user
+        });
+    }
+
+    try {
+        console.log('Buscando usuario:', user);
+        const foundUser = await UsuarioModel.findOne({ user });
+
+        if (!foundUser) {
+            console.log('Usuario no encontrado');
+            return res.status(204).json({
+                message: 'Login',
+                title: "Error",
+                alertMessage: "Usuario no encontrado",
+                icon: "error",
+                name: user
+            });
+        }
+
+        console.log('Validando contraseña para el usuario:', user);
+        const validPassword = await foundUser.validatePassword(pass);
+
+        if (!validPassword) {
+            console.log('Contraseña incorrecta');
+            return res.status(400).json({ auth: false, message: 'Contraseña incorrecta' });
+        }
+
+        console.log('Generando token JWT para el usuario:', user);
+        const token = jwt.sign({ id: foundUser._id }, process.env.JWT_SECRET, {
+            expiresIn: '1d' // Expira en 1 día
+        });
+
+        res.json({ auth: true, token });
+    } catch (error) {
+        console.error('Error en el login:', error);
+        next(error);
+    }
+};
+
 /* Altas de usuario */
 const registroAltas = async (req, res, next) => {
     try {
@@ -11,18 +59,11 @@ const registroAltas = async (req, res, next) => {
             estado_suscripcion, dias_suscripcion, tipo_rutina, user, pass, tipo_usuario 
         } = req.body;
 
-        // Verificar si el usuario ya existe en la base de datos por su nombre de usuario o correo electrónico
-        const existingUser = await usuarioModel.findOne({
-            where: {
-                [Op.or]: [
-                    { user: user },
-                    { email: email }
-                ]
-            }
+        const existingUser = await UsuarioModel.findOne({
+            $or: [{ user: user }, { email: email }]
         });
 
         if (existingUser) {
-            // Si el usuario ya existe, mostrar un mensaje de error
             if (existingUser.user === user) {
                 return res.json({
                     message: 'registro',
@@ -43,27 +84,13 @@ const registroAltas = async (req, res, next) => {
                 });
             }
         } else {
-            // Cifrar la contraseña
             const hash = await bcrypt.hash(pass, saltRounds);
 
-            // Si el usuario no existe, proceder con la inserción en la base de datos
-            const nuevoUsuario = usuarioModel.build({
-                nombre, 
-                apellidos, 
-                email, 
-                telefono, 
-                sexo, 
-                peso, 
-                estatura,
-                estado_suscripcion,      
-                dias_suscripcion,
-                tipo_rutina,
-                user,
-                pass: hash,
-                tipo_usuario
+            const nuevoUsuario = new UsuarioModel({
+                nombre, apellidos, email, telefono, sexo, peso, estatura,
+                estado_suscripcion, dias_suscripcion, tipo_rutina, user, pass: hash, tipo_usuario
             });
 
-            // Guardar la instancia en la base de datos
             await nuevoUsuario.save();
 
             console.log('Usuario insertado correctamente:', nuevoUsuario.toJSON());
@@ -82,11 +109,7 @@ const registroAltas = async (req, res, next) => {
     }
 };
 
-
-module.exports ={
-    login, logout,registroAltas
-}
-
-
-/* const usurioModel = require('../models/usuarios_models'); */
-
+module.exports = {
+    login,
+    registroAltas
+};
