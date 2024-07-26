@@ -39,7 +39,7 @@ const login = async (req, res, next) => {
             return res.status(400).json({ auth: false, message: 'Contraseña incorrecta' });
         }
 
-        console.log('Generando token JWT para el usuario:', user);
+        console.log('Generando token para el usuario:', user);
         const token = jwt.sign({ id: foundUser._id }, process.env.JWT_SECRET, {
             expiresIn: '1d' // Expira en 1 día
         });
