@@ -106,6 +106,7 @@ const registroAltas = async (req, res, next) => {
     } catch (error) {
         console.error('Error en el registro de usuario:', error);
         return res.status(500).json({ message: 'Error en el servidor' });
+        next(error);
     }
 };
 
