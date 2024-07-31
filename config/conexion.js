@@ -5,8 +5,8 @@ const dbconnect = async () => {
     try {
         mongoose.set('strictQuery', true);
         // Usa comillas invertidas para la interpolación de variables
-        const mongoURI = `${process.env.MONGOURL}`;
-        //const mongoURI = `mongodb+srv://aztetics:${process.env.MONGODB_PASSWORD}@apigym.vks23ap.mongodb.net/Gym?retryWrites=true&w=majority&appName=ApiGym`;
+        //const mongoURI = `${process.env.MONGOURL}`;
+        const mongoURI = `mongodb+srv://aztetics:aztetics@apigym.vks23ap.mongodb.net/Gym?retryWrites=true&w=majority&appName=ApiGym`;
         //const mongoURI = 'mongodb://127.0.0.1:27017/gym';
 
         await mongoose.connect(mongoURI, {
