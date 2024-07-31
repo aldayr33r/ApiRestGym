@@ -37,7 +37,7 @@ const login = async (req, res, next) => {
 
         if (!validPassword) {
             console.log('Contraseña incorrecta');
-            return res.status(400).json({ auth: false, message: 'Contraseña incorrecta' });
+            return res.status(401).json({ auth: false, message: 'Contraseña incorrecta' });
         }
 
         const fechaRegistro = new Date(foundUser.fecha_registro);
