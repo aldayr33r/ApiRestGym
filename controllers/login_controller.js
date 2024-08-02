@@ -54,7 +54,7 @@ const login = async (req, res, next) => {
             expiresIn: '1d' // Expira en 1 día
         });
 
-        res.json({ auth: true, token, rol: `${foundUser.tipo_usuario}` });
+        res.json({ auth: true, token, rol: `${foundUser.tipo_usuario}` , usuario: user});
     } catch (error) {
         console.error('Error en el login:', error);
         next(error);
