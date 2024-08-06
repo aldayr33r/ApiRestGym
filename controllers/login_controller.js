@@ -66,7 +66,7 @@ const registroAltas = async (req, res, next) => {
     try {
         const { 
             nombre, apellidos, email, telefono, sexo, peso, estatura, 
-            estado_suscripcion, dias_suscripcion, tipo_rutina, user, pass, tipo_usuario 
+            estado_suscripcion, dias_suscripcion, tipo_rutina, tipo_dieta, user, pass, tipo_usuario
         } = req.body;
 
         const existingUser = await UsuarioModel.findOne({
@@ -94,11 +94,38 @@ const registroAltas = async (req, res, next) => {
                 });
             }
         } else {
+
             const hash = await bcrypt.hash(pass, saltRounds);
+            
+            //validadcion de ditas
+            const peso_user = parseFloat(peso);
+            const estatura_user = parseFloat(estatura);
+            const sexo_user = sexo;
+            const imc = peso_user / (estatura_user * estatura_user); 
+            let dieta;          
+            console.log(`${imc.toFixed(1)}`) 
+            if (imc.toFixed(1) <= 18.5 && sexo_user ==='Hombre'){
+                dieta = 'dietaH2';
+            }
+            else if (imc < 25 && imc >= 18.6  && sexo_user == 'Hombre'){
+                dieta = 'dietaH3';
+
+            }else if(imc >= 25 && sexo_user == 'Hombre'){
+                dieta = 'dietaH1';
+            } else if (imc.toFixed(1) <= 18.5 && sexo_user == 'Mujer'){
+                dieta = 'dietaM2';
+            }
+            else if (imc < 25 && imc>= 18.6  && sexo_user == 'Mujer'){
+                dieta = 'dietaM3';
+
+            }else if(imc >= 25 && sexo_user == 'Mujer'){
+                dieta = 'dietaM1';
+            }
+
 
             const nuevoUsuario = new UsuarioModel({
                 nombre, apellidos, email, telefono, sexo, peso, estatura,
-                estado_suscripcion, dias_suscripcion, tipo_rutina, user, pass: hash, tipo_usuario
+                estado_suscripcion, dias_suscripcion, tipo_rutina, tipo_dieta: dieta, user, pass: hash, tipo_usuario
             });
 
             await nuevoUsuario.save();

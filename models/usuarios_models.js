@@ -12,6 +12,7 @@ const usuarioSchema = new mongoose.Schema({
   estado_suscripcion: { type: String, default:"Activo" },
   dias_suscripcion: { type: String, default:0 },
   tipo_rutina: { type: String, default:"Rango1" },
+  tipo_dieta:{ type: String, require:true},
   user: { type: String, required: true, unique: true },
   pass: { type: String, required: true },
   tipo_usuario: { type: String, required: true },
