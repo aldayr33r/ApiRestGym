@@ -1,5 +1,7 @@
 const rutinapModel = require('../models/rutinas_principiante_models');
 const userModel = require('../models/usuarios_models');
+const bcrypt = require('bcrypt');
+
 
 
 const rutina = async (req, res, next) => {
@@ -12,13 +14,7 @@ const rutina = async (req, res, next) => {
         if (!usuario) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
-        if (usuario.dias_suscripcion <= 0) {
-            return res.status(400).json({
-                message: 'Suscripción expirada',
-                alertMessage: 'Tu suscripción ha expirado. Por favor, renueva tu suscripción.',
-                icon: 'warning'
-            });
-        }
+       
    
         // Convertir el peso de string a número
         const peso_user = parseFloat(usuario.peso);
@@ -43,6 +39,9 @@ const rutina = async (req, res, next) => {
         // Verifica si la rutina asignada es válida antes de enviarla
         if (!rutinaAsignada) {
             return res.status(404).json({ message: 'Rutina asignada no encontrada' });
+        }else {
+            // Actualiza el campo tipo_rutina en la base de datos
+            await userModel.updateOne({ user }, { tipo_rutina: rango });
         }
 
         // Desglosa la rutina
@@ -64,6 +63,75 @@ const rutina = async (req, res, next) => {
     }
 };
 
+
+const update_User = async (req, res, next) => {
+    const userParam = req.params.user;
+    const { nombre, apellidos, email, telefono, sexo, peso, estatura, estado_suscripcion, user, pass } = req.body;
+    const saltRounds = 10; // Número de rondas para generar el salt
+
+    try {
+        // Buscar el usuario por el parámetro 'user'
+        const usuariofound = await userModel.findOne({ user: userParam });
+
+        // Verificar si el usuario existe
+        if (!usuariofound) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        if (email) {
+            const emailExists = await userModel.findOne({ email, _id: { $ne: usuariofound._id } });
+            if (emailExists) {
+                return res.status(400).json({ message: 'El correo electrónico ya está en uso por otro usuario' });
+            }
+        }
+        
+        if (user) {
+            const userExists = await userModel.findOne({ user, _id: { $ne: usuariofound._id } });
+            if (userExists) {
+                return res.status(400).json({ message: 'El nombre de usuario ya está en uso por otro usuario' });
+            }
+        }
+        if (usuariofound.estado_suscripcion === 'Activo' && estado_suscripcion === 'inactivo') {
+            return res.status(400).json({ message: 'No se puede actualizar el estado de suscripción a inactivo desde Activo' });
+        }
+
+
+
+        // Actualiza los campos del usuario
+        usuariofound.nombre = nombre || usuariofound.nombre;
+        usuariofound.apellidos = apellidos || usuariofound.apellidos;
+        usuariofound.email = email || usuariofound.email;
+        usuariofound.telefono = telefono || usuariofound.telefono;
+        usuariofound.sexo = sexo || usuariofound.sexo;
+        usuariofound.peso = peso || usuariofound.peso;
+        usuariofound.estatura = estatura || usuariofound.estatura;
+        usuariofound.user = user || usuariofound.user;
+
+        // Encripta la contraseña si se proporciona una nueva
+        if (pass) {
+            const hash = await bcrypt.hash(pass, saltRounds);
+            usuariofound.pass = hash;
+        }
+
+        // Actualiza el estado de suscripción si se proporciona y actualiza la fecha de registro
+        if (estado_suscripcion) {
+            usuariofound.estado_suscripcion = estado_suscripcion;
+            usuariofound.fecha_registro = new Date();
+        }
+
+        // Guarda los cambios en la base de datos
+        await usuariofound.save();
+
+        res.json({ message: 'Usuario actualizado correctamente', usuario: usuariofound });
+    } catch (err) {
+        next(err);
+    }
+};
+
+
+
+
 module.exports = {
-    rutina
+    rutina,
+    update_User
 };

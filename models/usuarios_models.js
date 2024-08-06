@@ -10,7 +10,7 @@ const usuarioSchema = new mongoose.Schema({
   peso: { type: String, required: true },
   estatura: { type: String, required: true },
   estado_suscripcion: { type: String, default:"Activo" },
-  dias_suscripcion: { type: String, default:0 },
+  dias_suscripcion: { type: String, default:30 },
   tipo_rutina: { type: String, default:"Rango1" },
   tipo_dieta:{ type: String, require:true},
   user: { type: String, required: true, unique: true },

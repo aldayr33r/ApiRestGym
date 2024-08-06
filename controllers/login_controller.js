@@ -44,17 +44,28 @@ const login = async (req, res, next) => {
         const fechaActual = new Date();
         const unMes = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
         const fechaFinSuscripcion = new Date(fechaRegistro.getTime() + unMes);
-        const dias_suscripcion = Math.ceil((fechaFinSuscripcion - fechaActual) / (24 * 60 * 60 * 1000));
+        let dias_suscripcion = Math.ceil((fechaFinSuscripcion - fechaActual) / (24 * 60 * 60 * 1000));
 
         // Actualiza el campo diasRestantes en la base de datos
-        await UsuarioModel.updateOne({ user }, { dias_suscripcion });
-
+        if (dias_suscripcion <= 0) {
+            dias_suscripcion = 0;
+            await UsuarioModel.updateOne({ user }, { dias_suscripcion, estado_suscripcion: 'Inactivo' });
+            return res.status(400).json({
+                message: 'Suscripción expirada',
+                alertMessage: 'Tu suscripción ha expirado. Por favor, renueva tu suscripción.',
+                icon: 'warning'
+            });
+        } else {
+            // Actualiza el campo dias_suscripcion en la base de datos
+            await UsuarioModel.updateOne({ user }, { dias_suscripcion, estado_suscripcion: 'Activo' });
+        }
+        
         console.log('Generando token para el usuario:', user);
         const token = jwt.sign({ id: foundUser._id }, process.env.JWT_SECRET, {
             expiresIn: '1d' // Expira en 1 día
         });
 
-        res.json({ auth: true, token, rol: `${foundUser.tipo_usuario}` , usuario: user});
+        res.json({ auth: true, token, rol: `${foundUser.tipo_usuario}`, usuario: user});
     } catch (error) {
         console.error('Error en el login:', error);
         next(error);
@@ -104,21 +115,21 @@ const registroAltas = async (req, res, next) => {
             const imc = peso_user / (estatura_user * estatura_user); 
             let dieta;          
             console.log(`${imc.toFixed(1)}`) 
-            if (imc.toFixed(1) <= 18.5 && sexo_user ==='Hombre'){
+            if (imc.toFixed(1) <= 18.5 && sexo_user ==='Masculino'){
                 dieta = 'dietaH2';
             }
-            else if (imc < 25 && imc >= 18.6  && sexo_user == 'Hombre'){
+            else if (imc < 25 && imc >= 18.6  && sexo_user == 'Masculino'){
                 dieta = 'dietaH3';
 
-            }else if(imc >= 25 && sexo_user == 'Hombre'){
+            }else if(imc >= 25 && sexo_user == 'Masculino'){
                 dieta = 'dietaH1';
-            } else if (imc.toFixed(1) <= 18.5 && sexo_user == 'Mujer'){
+            } else if (imc.toFixed(1) <= 18.5 && sexo_user == 'Femenino'){
                 dieta = 'dietaM2';
             }
-            else if (imc < 25 && imc>= 18.6  && sexo_user == 'Mujer'){
+            else if (imc < 25 && imc>= 18.6  && sexo_user == 'Femenino'){
                 dieta = 'dietaM3';
 
-            }else if(imc >= 25 && sexo_user == 'Mujer'){
+            }else if(imc >= 25 && sexo_user == 'Femenino'){
                 dieta = 'dietaM1';
             }
 
