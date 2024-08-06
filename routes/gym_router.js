@@ -8,6 +8,8 @@ const verifyToken = require('../controllers/verifyToken')
 router.post('/login', loginControl.login);
 router.post('/registro', loginControl.registroAltas);
 router.get('/rutina/:user', SusController.rutina);
+router.get('/listar_Usuarios', SusController.listar_Usuarios);
+router.delete('/eliminar_Usuarios/:user', SusController.eliminar_Usuarios);
 router.put('/actualizar/:user', SusController.update_User);
 router.get('/dieta/:user', dietaController.SendDieta);
 

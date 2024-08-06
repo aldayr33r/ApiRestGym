@@ -129,9 +129,66 @@ const update_User = async (req, res, next) => {
 };
 
 
+const listar_Usuarios = async (req, res, next) => {
+    try {
+        const { usuariof } = req.params;
+
+        // Consulta al modelo de usuario para obtener la información de peso
+        const usuario = await userModel.findOne({ usuariof });
+
+        if (!usuario) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+
+        const { nombre, apellidos, email, telefono, sexo, peso, estatura, estado_suscripcion, dias_suscripcion, tipo_rutina, tipo_dieta, user, pass, tipo_usuario, fecha_registro} = usuario;
+
+
+        res.json({ message: 'Usuario listado correctamente', 
+                nombre: nombre,
+                apellidos:apellidos,
+                email:email,
+                telefono:telefono,
+                sexo:sexo,
+                peso:peso,
+                estatura:estatura,
+                estado_suscripcion:estado_suscripcion,
+                dias_suscripcion:dias_suscripcion,
+                tipo_rutina:tipo_rutina,
+                tipo_dieta:tipo_dieta,
+                user:user,
+                pass:pass,
+                tipo_usuario:tipo_usuario,
+                fecha_registro:fecha_registro});
+       
+    } catch (err) {
+        next(err);
+    }
+};
+
+
+
+const eliminar_Usuarios = async (req, res, next) => {
+   
+        try {
+          const usuariof = req.params;
+          const resultado = await userModel.findOneAndDelete({ usuariof });
+      
+          if (!resultado) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+          }
+      
+          res.json({ mensaje: 'Usuario eliminado correctamente' });
+        } catch (error) {
+          res.status(500).json({ mensaje: 'Error al eliminar el Usuario', error });
+        }
+};
+
 
 
 module.exports = {
     rutina,
-    update_User
+    update_User,
+    listar_Usuarios,
+    eliminar_Usuarios
 };
