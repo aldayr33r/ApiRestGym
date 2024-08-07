@@ -184,11 +184,20 @@ const eliminar_Usuarios = async (req, res, next) => {
         }
 };
 
-
+const listar_allUsuarios = async (req, res, next) => {
+    try {
+        const usuarios = await userModel.find(); // Obtener todos los platillos de la base de datos
+        res.status(200).json({message: 'Usuarios listados correctamente',users: usuarios}); // Enviar los platillos como respuesta en formato JSON
+    }catch(error){
+        res.status(500).json({ message: 'Error al listar los usuarios', error });
+    
+    }
+}
 
 module.exports = {
     rutina,
     update_User,
     listar_Usuarios,
-    eliminar_Usuarios
+    eliminar_Usuarios,
+    listar_allUsuarios
 };
