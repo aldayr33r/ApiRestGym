@@ -1,11 +1,18 @@
 const rutinapModel = require('../models/rutinas_principiante_models');
 const userModel = require('../models/usuarios_models');
+const LogModel = require('../models/Log_model');
 const bcrypt = require('bcrypt');
 
+
+const obtenerDireccionIP = (req) => {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    return ip;
+};
 
 
 const rutina = async (req, res, next) => {
     try {
+        const ipUsuario = obtenerDireccionIP(req);
         const { user } = req.params;
 
         // Consulta al modelo de usuario para obtener la información de peso
@@ -58,6 +65,26 @@ const rutina = async (req, res, next) => {
                 dia5_Cardio_y_Flexibilidad
             }
         });
+
+        const rolUser = usuario.tipo_usuario;
+
+        const log = new LogModel({
+            usuario: user,
+            accion: "Consultar Rutina",
+            ip: ipUsuario,
+            tipo_usuario: rolUser,
+            lugar_accion: "Rutinas"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+
     } catch (err) {
         next(err);
     }
@@ -65,7 +92,9 @@ const rutina = async (req, res, next) => {
 
 
 const update_User = async (req, res, next) => {
+    const ipUsuario = obtenerDireccionIP(req);
     const userParam = req.params.user;
+    const userAdmin = req.params.user_admin;
     const { nombre, apellidos, email, telefono, peso, estatura, user, pass } = req.body;
     const saltRounds = 10; // Número de rondas para generar el salt
 
@@ -118,6 +147,26 @@ const update_User = async (req, res, next) => {
         // Guarda los cambios en la base de datos
         await usuariofound.save();
 
+
+        const log = new LogModel({
+            usuario: userAdmin,
+            accion: "Actualizar Usuario",
+            ip: ipUsuario,
+            tipo_usuario: "Admin",
+            lugar_accion: "Actualizar"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+
+
+
         res.json({ message: 'Usuario actualizado correctamente', usuario: usuariofound });
     } catch (err) {
         next(err);
@@ -125,7 +174,191 @@ const update_User = async (req, res, next) => {
 };
 
 
-const listar_Usuarios = async (req, res, next) => {
+const eliminar_Usuarios = async (req, res, next) => {
+   
+        try {
+        const ipUsuario = obtenerDireccionIP(req);
+          const usuariof = req.params.user;
+          const userAdmin = req.params.user_admin;
+          const resultado = await userModel.findOneAndDelete({ user: usuariof });
+      
+          if (!resultado) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+          }
+
+          if (resultado.tipo_usuario === 'Admin') {
+            return res.status(404).json({ mensaje: 'No puedes eliminar un administrador' });
+          }
+      
+          res.json({ mensaje: 'Usuario eliminado correctamente' });
+
+
+          const log = new LogModel({
+            usuario: userAdmin,
+            accion: "Eliminar Usuario",
+            ip: ipUsuario,
+            tipo_usuario: "Admin",
+            lugar_accion: "Eliminar"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+        } 
+        catch (error) {
+          res.status(500).json({ mensaje: 'Error al eliminar el Usuario', error });
+        }
+};
+
+
+const listar_allUsuarios = async (req, res, next) => {
+    try {
+        const ipUsuario = obtenerDireccionIP(req);
+        const userAdmin = req.params.user_admin;
+        const usuarios = await userModel.find(); // Obtener todos los platillos de la base de datos
+        res.status(200).json({message: 'Usuarios listados correctamente',users: usuarios}); // Enviar los platillos como respuesta en formato JSON
+
+
+        const log = new LogModel({
+            usuario: userAdmin,
+            accion: "Listar Usuarios",
+            ip: ipUsuario,
+            tipo_usuario: "Admin",
+            lugar_accion: "Listar todos los usuarios"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+    }catch(error){
+        res.status(500).json({ message: 'Error al listar los usuarios', error });
+    
+    }
+}
+
+
+const update_Info_User = async (req, res, next) => {
+    const userParam = req.params.user;
+    const ipUsuario = obtenerDireccionIP(req);
+    const { telefono, peso, estatura } = req.body;
+    try {
+        // Buscar el usuario por el parámetro 'user'
+        const usuariofound = await userModel.findOne({ user: userParam });
+
+        // Verificar si el usuario existe
+        if (!usuariofound) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+
+
+        // Actualiza los campos del usuario
+        usuariofound.telefono = telefono || usuariofound.telefono;
+        usuariofound.peso = peso || usuariofound.peso;
+        usuariofound.estatura = estatura || usuariofound.estatura;
+
+        // Guarda los cambios en la base de datos
+        await usuariofound.save();
+
+        res.json({ message: 'Usuario actualizado correctamente', usuario: usuariofound });
+
+        const log = new LogModel({
+            usuario: userParam,
+            accion: "Editar informacion de usuarios",
+            ip: ipUsuario,
+            tipo_usuario: "Client",
+            lugar_accion: "Actualizar perfil"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+
+const actualizar_suscripcion = async (req, res, next) => {
+    const userParam = req.params.user;
+    const ipUsuario = obtenerDireccionIP(req);
+    const userAdmin = req.params.user_admin;
+    try {
+        // Buscar el usuario por el parámetro 'user'
+        const usuariofound = await userModel.findOne({ user: userParam });
+
+        // Verificar si el usuario existe
+        if (!usuariofound) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+        const estado_suscripcion="Activo";
+        usuariofound.estado_suscripcion = estado_suscripcion;
+        usuariofound.fecha_registro = new Date();
+
+        const fechaRegistro = new Date(usuariofound.fecha_registro);
+        const fechaActual = new Date();
+        const unMes = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
+        const fechaFinSuscripcion = new Date(fechaRegistro.getTime() + unMes);
+        let dias_suscripcion = Math.ceil((fechaFinSuscripcion - fechaActual) / (24 * 60 * 60 * 1000));
+    
+        usuariofound.dias_suscripcion = dias_suscripcion;
+
+        await usuariofound.save();
+
+        res.json({ message: 'Suscripcion actualizada correctamente', usuario: usuariofound });
+
+        const log = new LogModel({
+            usuario: userAdmin,
+            accion: "cambiar estado de suscripcion",
+            ip: ipUsuario,
+            tipo_usuario: "Admin",
+            lugar_accion: "Renovar suscripcion"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+
+
+module.exports = {
+    rutina,
+    update_User,
+    eliminar_Usuarios,
+    listar_allUsuarios,
+    update_Info_User,
+    actualizar_suscripcion
+};
+
+
+/*const listar_Usuarios = async (req, res, next) => {
     try {
         const { usuariof } = req.params;
 
@@ -160,107 +393,4 @@ const listar_Usuarios = async (req, res, next) => {
     } catch (err) {
         next(err);
     }
-};
-
-
-
-const eliminar_Usuarios = async (req, res, next) => {
-   
-        try {
-          const usuariof = req.params.user;
-          const resultado = await userModel.findOneAndDelete({ user: usuariof });
-      
-          if (!resultado) {
-            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
-          }
-
-          if (resultado.tipo_usuario === 'Admin') {
-            return res.status(404).json({ mensaje: 'No puedes eliminar un administrador' });
-          }
-      
-          res.json({ mensaje: 'Usuario eliminado correctamente' });
-        } catch (error) {
-          res.status(500).json({ mensaje: 'Error al eliminar el Usuario', error });
-        }
-};
-
-const listar_allUsuarios = async (req, res, next) => {
-    try {
-        const usuarios = await userModel.find(); // Obtener todos los platillos de la base de datos
-        res.status(200).json({message: 'Usuarios listados correctamente',users: usuarios}); // Enviar los platillos como respuesta en formato JSON
-    }catch(error){
-        res.status(500).json({ message: 'Error al listar los usuarios', error });
-    
-    }
-}
-
-
-const update_Info_User = async (req, res, next) => {
-    const userParam = req.params.user;
-    const { telefono, peso, estatura } = req.body;
-    try {
-        // Buscar el usuario por el parámetro 'user'
-        const usuariofound = await userModel.findOne({ user: userParam });
-
-        // Verificar si el usuario existe
-        if (!usuariofound) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
-        }
-
-
-
-        // Actualiza los campos del usuario
-        usuariofound.telefono = telefono || usuariofound.telefono;
-        usuariofound.peso = peso || usuariofound.peso;
-        usuariofound.estatura = estatura || usuariofound.estatura;
-
-        // Guarda los cambios en la base de datos
-        await usuariofound.save();
-
-        res.json({ message: 'Usuario actualizado correctamente', usuario: usuariofound });
-    } catch (err) {
-        next(err);
-    }
-};
-
-const actualizar_suscripcion = async (req, res, next) => {
-    const userParam = req.params.user;
-    try {
-        // Buscar el usuario por el parámetro 'user'
-        const usuariofound = await userModel.findOne({ user: userParam });
-
-        // Verificar si el usuario existe
-        if (!usuariofound) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
-        }
-        const estado_suscripcion="Activo";
-        usuariofound.estado_suscripcion = estado_suscripcion;
-        usuariofound.fecha_registro = new Date();
-
-        const fechaRegistro = new Date(usuariofound.fecha_registro);
-        const fechaActual = new Date();
-        const unMes = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
-        const fechaFinSuscripcion = new Date(fechaRegistro.getTime() + unMes);
-        let dias_suscripcion = Math.ceil((fechaFinSuscripcion - fechaActual) / (24 * 60 * 60 * 1000));
-    
-        usuariofound.dias_suscripcion = dias_suscripcion;
-
-        await usuariofound.save();
-
-        res.json({ message: 'Suscripcion actualizada correctamente', usuario: usuariofound });
-    } catch (err) {
-        next(err);
-    }
-};
-
-
-
-module.exports = {
-    rutina,
-    update_User,
-    listar_Usuarios,
-    eliminar_Usuarios,
-    listar_allUsuarios,
-    update_Info_User,
-    actualizar_suscripcion
-};
+};*/

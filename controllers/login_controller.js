@@ -4,8 +4,17 @@ const UsuarioModel = require('../models/usuarios_models');
 const saltRounds = 10;
 require('dotenv').config(); 
 
+
+const obtenerDireccionIP = (req) => {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    return ip;
+};
+
+
 const login = async (req, res, next) => {
     const { user, pass } = req.body;
+    const ipUsuario = obtenerDireccionIP(req);
+
 
     if (!user || !pass) {
         return res.status(400).json({
@@ -67,6 +76,28 @@ const login = async (req, res, next) => {
         });
 
         res.json({ auth: true, token, rol: `${foundUser.tipo_usuario}` , usuario: user, dias : `${foundUser.dias_suscripcion }` });
+
+        const rolUser = foundUser.tipo_usuario;
+
+
+        const log = new LogModel({
+            usuario: user,
+            accion: "Iniciar Sesion",
+            ip: ipUsuario,
+            tipo_usuario: rolUser,
+            lugar_accion: "Login"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+
+
     } catch (error) {
         console.error('Error en el login:', error);
         next(error);
@@ -76,6 +107,8 @@ const login = async (req, res, next) => {
 /* Altas de usuario */
 const registroAltas = async (req, res, next) => {
     try {
+        const ipUsuario = obtenerDireccionIP(req);
+        const userAdmin = req.params.user_admin;
         const { 
             nombre, apellidos, email, telefono, sexo, peso, estatura, 
             estado_suscripcion, dias_suscripcion, tipo_rutina, tipo_dieta, user, pass, tipo_usuario
@@ -152,6 +185,25 @@ const registroAltas = async (req, res, next) => {
                 name: user
             });
         }
+
+        const log = new LogModel({
+            usuario: userAdmin,
+            accion: "Registro de usuarios",
+            ip: ipUsuario,
+            tipo_usuario: "Admin",
+            lugar_accion: "Registro"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+
+
     } catch (error) {
         console.error('Error en el registro de usuario:', error);
         return res.status(500).json({ message: 'Error en el servidor' });
