@@ -219,7 +219,7 @@ const eliminar_Usuarios = async (req, res, next) => {
 const listar_allUsuarios = async (req, res, next) => {
     try {
         const ipUsuario = obtenerDireccionIP(req);
-        const userAdmin = req.params.user_admin;
+        const userAdmin = req.params.user_admin;                                                                                                                                                                                        
         const usuarios = await userModel.find(); // Obtener todos los platillos de la base de datos
         res.status(200).json({message: 'Usuarios listados correctamente',users: usuarios}); // Enviar los platillos como respuesta en formato JSON
 

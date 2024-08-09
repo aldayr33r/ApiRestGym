@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const UsuarioModel = require('../models/usuarios_models');
+const LogModel = require('../models/Log_model');
 const saltRounds = 10;
 require('dotenv').config(); 
 
@@ -176,6 +177,25 @@ const registroAltas = async (req, res, next) => {
             await nuevoUsuario.save();
 
             console.log('Usuario insertado correctamente:', nuevoUsuario.toJSON());
+
+            
+            const log = new LogModel({
+                usuario: userAdmin,
+                accion: "Registro de usuarios",
+                ip: ipUsuario,
+                tipo_usuario: "Admin",
+                lugar_accion: "Registro"
+            });
+            
+            log.save()
+                .then(() => {
+                    console.log('Log guardado correctamente');
+                })
+                .catch(error => {
+                    console.error('Error al hacer el log:', error);
+                    res.status(500).send('Error en el log');
+                });
+
             return res.json({
                 message: 'registro',
                 title: "Registrado",
@@ -185,25 +205,6 @@ const registroAltas = async (req, res, next) => {
                 name: user
             });
         }
-
-        const log = new LogModel({
-            usuario: userAdmin,
-            accion: "Registro de usuarios",
-            ip: ipUsuario,
-            tipo_usuario: "Admin",
-            lugar_accion: "Registro"
-        });
-        
-        log.save()
-            .then(() => {
-                console.log('Log guardado correctamente');
-            })
-            .catch(error => {
-                console.error('Error al hacer el log:', error);
-                res.status(500).send('Error en el log');
-            });
-
-
     } catch (error) {
         console.error('Error en el registro de usuario:', error);
         return res.status(500).json({ message: 'Error en el servidor' });
