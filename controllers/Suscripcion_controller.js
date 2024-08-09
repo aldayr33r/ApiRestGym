@@ -66,7 +66,7 @@ const rutina = async (req, res, next) => {
 
 const update_User = async (req, res, next) => {
     const userParam = req.params.user;
-    const { nombre, apellidos, email, telefono, sexo, peso, estatura, estado_suscripcion, user, pass } = req.body;
+    const { nombre, apellidos, email, telefono, peso, estatura, user, pass } = req.body;
     const saltRounds = 10; // Número de rondas para generar el salt
 
     try {
@@ -91,10 +91,7 @@ const update_User = async (req, res, next) => {
                 return res.status(400).json({ message: 'El nombre de usuario ya está en uso por otro usuario' });
             }
         }
-        if (usuariofound.estado_suscripcion === 'Activo' && estado_suscripcion === 'inactivo') {
-            return res.status(400).json({ message: 'No se puede actualizar el estado de suscripción a inactivo desde Activo' });
-        }
-
+        
 
 
         // Actualiza los campos del usuario
@@ -102,22 +99,21 @@ const update_User = async (req, res, next) => {
         usuariofound.apellidos = apellidos || usuariofound.apellidos;
         usuariofound.email = email || usuariofound.email;
         usuariofound.telefono = telefono || usuariofound.telefono;
-        usuariofound.sexo = sexo || usuariofound.sexo;
         usuariofound.peso = peso || usuariofound.peso;
         usuariofound.estatura = estatura || usuariofound.estatura;
         usuariofound.user = user || usuariofound.user;
 
-        // Encripta la contraseña si se proporciona una nueva
-        if (pass) {
+        // Encripta la contraseña si se proporciona una nueva y es distinta a la anterior
+        if (usuariofound.pass !== pass) {
             const hash = await bcrypt.hash(pass, saltRounds);
             usuariofound.pass = hash;
         }
 
         // Actualiza el estado de suscripción si se proporciona y actualiza la fecha de registro
-        if (estado_suscripcion) {
+        /*if (estado_suscripcion) {
             usuariofound.estado_suscripcion = estado_suscripcion;
             usuariofound.fecha_registro = new Date();
-        }
+        }*/
 
         // Guarda los cambios en la base de datos
         await usuariofound.save();
@@ -171,11 +167,15 @@ const listar_Usuarios = async (req, res, next) => {
 const eliminar_Usuarios = async (req, res, next) => {
    
         try {
-          const usuariof = req.params;
-          const resultado = await userModel.findOneAndDelete({ usuariof });
+          const usuariof = req.params.user;
+          const resultado = await userModel.findOneAndDelete({ user: usuariof });
       
           if (!resultado) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+          }
+
+          if (resultado.tipo_usuario === 'Admin') {
+            return res.status(404).json({ mensaje: 'No puedes eliminar un administrador' });
           }
       
           res.json({ mensaje: 'Usuario eliminado correctamente' });
@@ -194,10 +194,73 @@ const listar_allUsuarios = async (req, res, next) => {
     }
 }
 
+
+const update_Info_User = async (req, res, next) => {
+    const userParam = req.params.user;
+    const { telefono, peso, estatura } = req.body;
+    try {
+        // Buscar el usuario por el parámetro 'user'
+        const usuariofound = await userModel.findOne({ user: userParam });
+
+        // Verificar si el usuario existe
+        if (!usuariofound) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+
+
+        // Actualiza los campos del usuario
+        usuariofound.telefono = telefono || usuariofound.telefono;
+        usuariofound.peso = peso || usuariofound.peso;
+        usuariofound.estatura = estatura || usuariofound.estatura;
+
+        // Guarda los cambios en la base de datos
+        await usuariofound.save();
+
+        res.json({ message: 'Usuario actualizado correctamente', usuario: usuariofound });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const actualizar_suscripcion = async (req, res, next) => {
+    const userParam = req.params.user;
+    try {
+        // Buscar el usuario por el parámetro 'user'
+        const usuariofound = await userModel.findOne({ user: userParam });
+
+        // Verificar si el usuario existe
+        if (!usuariofound) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+        const estado_suscripcion="Activo";
+        usuariofound.estado_suscripcion = estado_suscripcion;
+        usuariofound.fecha_registro = new Date();
+
+        const fechaRegistro = new Date(usuariofound.fecha_registro);
+        const fechaActual = new Date();
+        const unMes = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
+        const fechaFinSuscripcion = new Date(fechaRegistro.getTime() + unMes);
+        let dias_suscripcion = Math.ceil((fechaFinSuscripcion - fechaActual) / (24 * 60 * 60 * 1000));
+    
+        usuariofound.dias_suscripcion = dias_suscripcion;
+
+        await usuariofound.save();
+
+        res.json({ message: 'Suscripcion actualizada correctamente', usuario: usuariofound });
+    } catch (err) {
+        next(err);
+    }
+};
+
+
+
 module.exports = {
     rutina,
     update_User,
     listar_Usuarios,
     eliminar_Usuarios,
-    listar_allUsuarios
+    listar_allUsuarios,
+    update_Info_User,
+    actualizar_suscripcion
 };

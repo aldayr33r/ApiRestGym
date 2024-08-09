@@ -11,6 +11,8 @@ router.get('/rutina/:user', SusController.rutina);
 router.get('/listar_Usuarios', SusController.listar_allUsuarios);
 router.delete('/eliminar_Usuarios/:user', SusController.eliminar_Usuarios);
 router.put('/actualizar/:user', SusController.update_User);
+router.put('/actualizar_info/:user', SusController.update_Info_User);
+router.put('/actualizar_sus/:user', SusController.actualizar_suscripcion);
 router.get('/dieta/:user', dietaController.SendDieta);
 
 

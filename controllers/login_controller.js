@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const UsuarioModel = require('../models/usuarios_models');
 const saltRounds = 10;
-/* require('dotenv').config(); */
+require('dotenv').config(); 
 
 const login = async (req, res, next) => {
     const { user, pass } = req.body;
@@ -44,10 +44,22 @@ const login = async (req, res, next) => {
         const fechaActual = new Date();
         const unMes = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
         const fechaFinSuscripcion = new Date(fechaRegistro.getTime() + unMes);
-        const dias_suscripcion = Math.ceil((fechaFinSuscripcion - fechaActual) / (24 * 60 * 60 * 1000));
+        let dias_suscripcion = Math.ceil((fechaFinSuscripcion - fechaActual) / (24 * 60 * 60 * 1000));
 
-        // Actualiza el campo diasRestantes en la base de datos
-        await UsuarioModel.updateOne({ user }, { dias_suscripcion });
+
+        
+        if (dias_suscripcion <= 0) {
+            dias_suscripcion = 0;
+            await UsuarioModel.updateOne({ user }, { dias_suscripcion, estado_suscripcion: 'Inactivo' });
+            return res.status(400).json({
+                message: 'Suscripción expirada',
+                alertMessage: 'Tu suscripción ha expirado. Por favor, renueva tu suscripción.',
+                icon: 'warning'
+            });
+        } else {
+            // Actualiza el campo dias_suscripcion en la base de datos
+            await UsuarioModel.updateOne({ user }, { dias_suscripcion, estado_suscripcion: 'Activo' });
+        }
 
         console.log('Generando token para el usuario:', user);
         const token = jwt.sign({ id: foundUser._id }, process.env.JWT_SECRET, {
