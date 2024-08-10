@@ -347,20 +347,10 @@ const actualizar_suscripcion = async (req, res, next) => {
 };
 
 
-
-module.exports = {
-    rutina,
-    update_User,
-    eliminar_Usuarios,
-    listar_allUsuarios,
-    update_Info_User,
-    actualizar_suscripcion
-};
-
-
-/*const listar_Usuarios = async (req, res, next) => {
+const listar_info_Usuarios = async (req, res, next) => {
     try {
         const { usuariof } = req.params;
+        const ipUsuario = obtenerDireccionIP(req);
 
         // Consulta al modelo de usuario para obtener la información de peso
         const usuario = await userModel.findOne({ usuariof });
@@ -370,7 +360,7 @@ module.exports = {
         }
 
 
-        const { nombre, apellidos, email, telefono, sexo, peso, estatura, estado_suscripcion, dias_suscripcion, tipo_rutina, tipo_dieta, user, pass, tipo_usuario, fecha_registro} = usuario;
+        const { nombre, apellidos, email, telefono, sexo, peso, estatura, user} = usuario;
 
 
         res.json({ message: 'Usuario listado correctamente', 
@@ -381,16 +371,73 @@ module.exports = {
                 sexo:sexo,
                 peso:peso,
                 estatura:estatura,
-                estado_suscripcion:estado_suscripcion,
-                dias_suscripcion:dias_suscripcion,
-                tipo_rutina:tipo_rutina,
-                tipo_dieta:tipo_dieta,
-                user:user,
-                pass:pass,
-                tipo_usuario:tipo_usuario,
-                fecha_registro:fecha_registro});
+                user:user});
+
+
+
+                const log = new LogModel({
+                    usuario: usuariof,
+                    accion: "Listar info Usuarios",
+                    ip: ipUsuario,
+                    tipo_usuario: "Client",
+                    lugar_accion: "Perfil Usuario"
+                });
+                
+                log.save()
+                    .then(() => {
+                        console.log('Log guardado correctamente');
+                    })
+                    .catch(error => {
+                        console.error('Error al hacer el log:', error);
+                        res.status(500).send('Error en el log');
+                    });
        
     } catch (err) {
         next(err);
     }
-};*/
+};
+
+
+const listar_logs = async (req, res, next) => {
+    try {
+        const ipUsuario = obtenerDireccionIP(req);
+        const userAdmin = req.params.user_admin;                                                                                                                                                                                        
+        const logs = await LogModel.find(); // Obtener todos los platillos de la base de datos
+        res.status(200).json({message: 'Usuarios listados correctamente', Acciones: logs}); // Enviar los platillos como respuesta en formato JSON
+
+
+        const log = new LogModel({
+            usuario: userAdmin,
+            accion: "Listar logs",
+            ip: ipUsuario,
+            tipo_usuario: "Admin",
+            lugar_accion: "logs"
+        });
+        
+        log.save()
+            .then(() => {
+                console.log('Log guardado correctamente');
+            })
+            .catch(error => {
+                console.error('Error al hacer el log:', error);
+                res.status(500).send('Error en el log');
+            });
+    }catch(error){
+        res.status(500).json({ message: 'Error al listar los usuarios', error });
+    
+    }
+}
+
+module.exports = {
+    rutina,
+    update_User,
+    eliminar_Usuarios,
+    listar_allUsuarios,
+    update_Info_User,
+    actualizar_suscripcion,
+    listar_info_Usuarios,
+    listar_logs
+};
+
+
+
