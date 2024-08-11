@@ -375,7 +375,7 @@ const listar_info_Usuarios = async (req, res, next) => {
         const ipUsuario = obtenerDireccionIP(req);
 
         // Consulta al modelo de usuario para obtener la información de peso
-        const usuario = await userModel.findOne({ usuariof });
+        const usuario = await userModel.findOne({ user:usuariof });
 
         if (!usuario) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
