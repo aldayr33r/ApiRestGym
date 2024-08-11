@@ -371,11 +371,11 @@ const actualizar_suscripcion = async (req, res, next) => {
 
 const listar_info_Usuarios = async (req, res, next) => {
     try {
-        const { usuariof } = req.params;
+        const usuariof = req.params.user;
         const ipUsuario = obtenerDireccionIP(req);
 
         // Consulta al modelo de usuario para obtener la información de peso
-        const usuario = await userModel.findOne({ user:usuariof });
+        const usuario = await userModel.findOne({ user: usuariof });
 
         if (!usuario) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
