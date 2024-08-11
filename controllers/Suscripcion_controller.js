@@ -25,19 +25,40 @@ const rutina = async (req, res, next) => {
    
         // Convertir el peso de string a número
         const peso_user = parseFloat(usuario.peso);
+        const sexo_user = usuario.sexo;
+        const estatura_user = parseFloat(usuario.estatura);
+        const alturaMetros = estatura_user / 100;
+        const imc_user = peso_user / (alturaMetros * alturaMetros);
+
 
         let rutinaAsignada;
         let rango;
 
         // Asigna el rango correspondiente según el peso del usuario
-        if (peso_user >= 50 && peso_user <= 80) {
-            rango = 'Rango1';
-        } else if (peso_user > 80 && peso_user <= 110) {
-            rango = 'Rango2';
-        } else if (peso_user > 110) {
-            rango = 'Rango3';
-        } else {
-            return res.status(400).json({ message: 'Peso fuera de los rangos definidos' });
+        if (sexo_user === 'Femenino') {
+            if (imc_user >= 18.5 && imc_user <= 24.9) {
+                rango = 'RangoM1';
+            } else if (imc_user > 24.9 && imc_user <= 29.9) {
+                rango = 'RangoM2';
+            } else if (imc_user > 29.9 && imc_user <= 34.9) {
+                rango = 'RangoM3';
+            } else if (imc_user > 34.9) {
+                rango = 'RangoM4';
+            } else {
+                return res.status(400).json({ message: 'IMC fuera de los rangos definidos para mujeres' });
+            }
+        } else if (sexo_user === 'Masculino') {
+            if (imc_user >= 18.5 && imc_user <= 24.9) {
+                rango = 'RangoH1';
+            } else if (imc_user > 24.9 && imc_user <= 29.9) {
+                rango = 'RangoH2';
+            } else if (imc_user > 29.9 && imc_user <= 34.9) {
+                rango = 'RangoH3';
+            } else if (imc_user > 34.9) {
+                rango = 'RangoH4';
+            } else {
+                return res.status(400).json({ message: 'IMC fuera de los rangos definidos para hombres' });
+            }
         }
 
         // Consulta al modelo de rutina para obtener la rutina correspondiente al rango
@@ -57,6 +78,7 @@ const rutina = async (req, res, next) => {
         // Enviar la respuesta
         res.json({
             message: 'Rutina asignada',
+            Tipo_rutina: rango,
             rutina: {
                 dia1_Pecho_y_Triceps,
                 dia2_Espalda_y_Biceps,
