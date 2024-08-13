@@ -1,7 +1,67 @@
 const rutinapModel = require('../models/rutinas_principiante_models');
+const cron = require('node-cron');
 const userModel = require('../models/usuarios_models');
 const LogModel = require('../models/Log_model');
 const bcrypt = require('bcrypt');
+const transporter = require('../config/mailer.js');
+
+
+
+async function verificarSuscripciones() {
+    try {
+        const usuarios = await userModel.find(); // Obtener todos los usuarios
+
+        usuarios.forEach(async (foundUser) => {
+            const fechaRegistro = new Date(foundUser.fecha_registro);
+            const fechaActual = new Date();
+            const unMes = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
+            const fechaFinSuscripcion = new Date(fechaRegistro.getTime() + unMes);
+            let dias_suscripcion = Math.ceil((fechaFinSuscripcion - fechaActual) / (24 * 60 * 60 * 1000));
+
+            // Si quedan 10, 5 o 1 día, enviar un correo
+            if ([10, 5, 1].includes(dias_suscripcion)) {
+                const clientUsers = await userModel.find({ tipo_usuario: 'client' }); // Cambiado findAll a find
+
+                if (clientUsers.length > 0) {
+                    clientUsers.forEach(async (clientUser) => {
+                        const correoCli = clientUser.email;
+
+                        const mailBody = `
+                            <h2>Estimado usuario,</h2>
+                            <p>Nos dirigimos a ti para informarte que la suscripción del usuario <strong>${foundUser.nombre}</strong> está próxima a expirar.</p>
+                            <p>Quedan <strong>${dias_suscripcion} días</strong> para que la suscripción llegue a su fin.</p>
+                            <p>Para evitar la interrupción en los servicios, te recomendamos encarecidamente que te pongas en contacto con el Administrador y procedas a renovar la suscripción a la mayor brevedad.</p>
+                            <p>Recuerda que mantener tu suscripción activa te permite seguir disfrutando de todas las ventajas y beneficios que ofrecemos.</p>
+                            <p>Si tienes alguna duda o necesitas asistencia, no dudes en comunicarte con nuestro equipo de soporte.</p>
+                            <p>Saludos cordiales,</p>
+                            <p><strong>El equipo de Aztetics</strong></p>`;
+
+                            const mailOptions = {
+                                from: 'aztetics.ti@gmail.com',
+                                to: correoCli,
+                                subject: `Aviso: La suscripción de ${foundUser.nombre} expira en ${dias_suscripcion} días`,
+                                 html: mailBody
+                            };
+
+
+                        try {
+                            await transporter.sendMail(mailOptions);
+                            console.log(`Correo electrónico enviado al Usuario: ${correoCli}`);
+                        } catch (error) {
+                            console.log('Error al enviar el correo electrónico:', error);
+                        }
+                    });
+                }
+            }
+        });
+    } catch (error) {
+        console.log('Error al verificar suscripciones:', error);
+    }
+}
+
+
+// Configurar cron job para que se ejecute todos los días a las 00:00
+cron.schedule('0 13 * * *', verificarSuscripciones);
 
 
 const obtenerDireccionIP = (req) => {
