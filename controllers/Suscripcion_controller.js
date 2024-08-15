@@ -61,7 +61,7 @@ async function verificarSuscripciones() {
 
 
 // Configurar cron job para que se ejecute todos los días a las 00:00
-cron.schedule('34 19 * * *', verificarSuscripciones);
+cron.schedule('38 19 * * *', verificarSuscripciones);
 
 
 const obtenerDireccionIP = (req) => {
