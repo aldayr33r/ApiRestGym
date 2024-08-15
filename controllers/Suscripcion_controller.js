@@ -257,32 +257,37 @@ const update_User = async (req, res, next) => {
 
 
 const eliminar_Usuarios = async (req, res, next) => {
-   
-        try {
+    try {
         const ipUsuario = obtenerDireccionIP(req);
-          const usuariof = req.params.user;
-          const userAdmin = req.params.user_admin;
-          const resultado = await userModel.findOneAndDelete({ user: usuariof });
-      
-          if (!resultado) {
+        const usuariof = req.params.user;
+        const userAdmin = req.params.user_admin;
+
+        // Buscar el usuario antes de intentar eliminarlo
+        const resultado = await userModel.findOne({ user: usuariof });
+
+        if (!resultado) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
-          }
+        }
 
-          if (resultado.tipo_usuario === 'Admin') {
-            return res.status(404).json({ mensaje: 'No puedes eliminar un administrador' });
-          }
-      
-          res.json({ mensaje: 'Usuario eliminado correctamente' });
+        // Verificar si el usuario es un administrador
+        if (resultado.tipo_usuario === 'Admin') {
+            return res.status(403).json({ mensaje: 'No puedes eliminar un administrador' });
+        }
 
+        // Eliminar el usuario si no es un administrador
+        await userModel.findOneAndDelete({ user: usuariof });
 
-          const log = new LogModel({
+        res.json({ mensaje: 'Usuario eliminado correctamente' });
+
+        // Guardar en el log la acción de eliminar
+        const log = new LogModel({
             usuario: userAdmin,
             accion: "Eliminar Usuario",
             ip: ipUsuario,
             tipo_usuario: "Admin",
             lugar_accion: "Eliminar"
         });
-        
+
         log.save()
             .then(() => {
                 console.log('Log guardado correctamente');
@@ -291,11 +296,12 @@ const eliminar_Usuarios = async (req, res, next) => {
                 console.error('Error al hacer el log:', error);
                 res.status(500).send('Error en el log');
             });
-        } 
-        catch (error) {
-          res.status(500).json({ mensaje: 'Error al eliminar el Usuario', error });
-        }
+
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error al eliminar el Usuario', error });
+    }
 };
+
 
 
 const listar_allUsuarios = async (req, res, next) => {
