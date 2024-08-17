@@ -6,8 +6,9 @@ const dbconnect = async () => {
         mongoose.set('strictQuery', true);
         // Usa comillas invertidas para la interpolación de variables
         //const mongoURI = `${process.env.MONGOURL}`;
-        const mongoURI = `mongodb+srv://aztetics:aztetics@apigym.vks23ap.mongodb.net/Gym?retryWrites=true&w=majority&appName=ApiGym`;
-       // const mongoURI = 'mongodb://127.0.0.1:27017/gym';
+       // const mongoURI = `mongodb+srv://aztetics:aztetics@apigym.vks23ap.mongodb.net/Gym?retryWrites=true&w=majority&appName=ApiGym`;
+       const mongoURI = "mongodb+srv://aztetics:aztetics@apigym.tipry.mongodb.net/Gym?retryWrites=true&w=majority&appName=apiGym";
+        // const mongoURI = 'mongodb://127.0.0.1:27017/gym';
 
         await mongoose.connect(mongoURI, {
             serverSelectionTimeoutMS: 10000, // Tiempo de espera para la selección del servidor
